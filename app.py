@@ -17,12 +17,12 @@ from analyser import (
 app = Flask(__name__)
 app.jinja_env.globals.update(enumerate=enumerate)
 
-# Safe startup — don't crash if DB not ready
 try:
     init_db()
     print("✅ Database initialized!")
 except Exception as e:
-    print(f"⚠️ Database init failed: {e}")
+    print(f"❌ Database init failed: {e}")
+    print(f"❌ DATABASE_URL value: {os.environ.get('DATABASE_URL', 'NOT SET')[:30]}")
 
 # ── Dashboard ─────────────────────────────────────────────
 @app.route("/")
