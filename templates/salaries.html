@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="page-header">
+    <h1>Salary Intelligence</h1>
+    <p>Salary trends across roles and skills</p>
+</div>
+
+<div class="charts-grid">
+    <div class="chart-card wide">
+        <h2>Salary Range by Role</h2>
+        <canvas id="salaryRoleChart"></canvas>
+    </div>
+</div>
+
+<div class="chart-card">
+    <h2>Salary by Role — Detailed</h2>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Min Salary</th>
+                <th>Max Salary</th>
+                <th>Jobs</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for role in salary_by_role %}
+            <tr>
+                <td>{{ role.category }}</td>
+                <td>${{ "{:,}".format(role.avg_min|int) }}</td>
+                <td>${{ "{:,}".format(role.avg_max|int) }}</td>
+                <td>{{ role.job_count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+fetch("/api/salary-by-skill")
+    .then(r => r.json())
+    .then(data => {
+        new Chart(document.getElementById("salaryRoleChart"), {
+            type: "bar",
+            data: {
+                labels:   data.map(d => d.name),
+                datasets: [{
+                    label:           "Avg Salary (USD)",
+                    data:            data.map(d => d.avg_salary),
+                    backgroundColor: "#52B788",
+                    borderRadius:    6,
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    });
+</script>
+
+{% endblock %}

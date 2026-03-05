@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="page-header">
+    <h1>Skills Intelligence</h1>
+    <p>Most demanded skills across all job listings</p>
+</div>
+
+<!-- Top Skills Chart -->
+<div class="chart-card">
+    <h2>Top 20 Most Demanded Skills</h2>
+    <canvas id="skillsChart"></canvas>
+</div>
+
+<!-- Skills Table -->
+<div class="chart-card">
+    <h2>Skills Ranked by Demand</h2>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Skill</th>
+                <th>Job Demand</th>
+                <th>Demand Bar</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for i, skill in enumerate(top_skills) %}
+            <tr>
+                <td class="rank">{{ i + 1 }}</td>
+                <td><span class="skill-tag">{{ skill.name }}</span></td>
+                <td>{{ skill.demand }} jobs</td>
+                <td>
+                    <div class="bar-wrap">
+                        <div class="bar" style="width: {{ (skill.demand / top_skills[0].demand * 100)|int }}%"></div>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Salary by Skill -->
+<div class="chart-card">
+    <h2>Average Salary by Skill</h2>
+    <canvas id="salarySkillChart"></canvas>
+</div>
+
+<script>
+fetch("/api/top-skills")
+    .then(r => r.json())
+    .then(data => {
+        new Chart(document.getElementById("skillsChart"), {
+            type: "bar",
+            data: {
+                labels:   data.map(d => d.name),
+                datasets: [{
+                    label:           "Job Demand",
+                    data:            data.map(d => d.demand),
+                    backgroundColor: "#2D6A4F",
+                    borderRadius:    6,
+                }]
+            },
+            options: {
+                indexAxis: "y",
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true },
+                    y: { grid: { display: false } }
+                }
+            }
+        });
+    });
+
+fetch("/api/salary-by-skill")
+    .then(r => r.json())
+    .then(data => {
+        new Chart(document.getElementById("salarySkillChart"), {
+            type: "bar",
+            data: {
+                labels:   data.map(d => d.name),
+                datasets: [{
+                    label:           "Avg Salary (USD)",
+                    data:            data.map(d => d.avg_salary),
+                    backgroundColor: "#40916C",
+                    borderRadius:    6,
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    });
+</script>
+
+{% endblock %}

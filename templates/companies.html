@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="page-header">
+    <h1>Company Insights</h1>
+    <p>Companies hiring the most right now</p>
+</div>
+
+<div class="chart-card">
+    <h2>Top Hiring Companies</h2>
+    <canvas id="companiesChart"></canvas>
+</div>
+
+<div class="chart-card">
+    <h2>All Companies</h2>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Company</th>
+                <th>Jobs Posted</th>
+                <th>Avg Salary</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for i, company in enumerate(companies) %}
+            <tr>
+                <td class="rank">{{ i + 1 }}</td>
+                <td>{{ company.name }}</td>
+                <td>{{ company.job_count }}</td>
+                <td>${{ "{:,}".format(company.avg_salary|int) if company.avg_salary else "N/A" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+fetch("/api/companies")
+    .then(r => r.json())
+    .then(data => {
+        new Chart(document.getElementById("companiesChart"), {
+            type: "bar",
+            data: {
+                labels:   data.map(d => d.name),
+                datasets: [{
+                    label:           "Jobs Posted",
+                    data:            data.map(d => d.job_count),
+                    backgroundColor: "#2D6A4F",
+                    borderRadius:    6,
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    });
+</script>
+
+{% endblock %}

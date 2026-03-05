@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- Summary Cards -->
+<div class="page-header">
+    <h1>Job Market Intelligence</h1>
+    <p>Real-time insights from thousands of job listings</p>
+    {% if summary.last_fetch %}
+    <span class="badge">Last updated: {{ summary.last_fetch.strftime('%b %d, %Y') }}</span>
+    {% endif %}
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">{{ summary.total_jobs }}</div>
+        <div class="stat-label">Jobs Analysed</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ summary.total_skills }}</div>
+        <div class="stat-label">Skills Tracked</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ summary.total_companies }}</div>
+        <div class="stat-label">Companies Hiring</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">${{ "{:,}".format(summary.avg_salary|int) if summary.avg_salary else "N/A" }}</div>
+        <div class="stat-label">Avg Salary (USD)</div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="charts-grid">
+
+    <div class="chart-card wide">
+        <h2>Top Skills in Demand</h2>
+        <canvas id="skillsChart"></canvas>
+    </div>
+
+    <div class="chart-card">
+        <h2>Jobs by Category</h2>
+        <canvas id="categoryChart"></canvas>
+    </div>
+
+</div>
+
+<!-- Top Companies -->
+<div class="chart-card">
+    <h2>Top Hiring Companies</h2>
+    <div class="company-list">
+        {% for i, company in enumerate(companies) %}
+        <div class="company-row">
+            <span class="rank">{{ i + 1 }}</span>
+            <span class="company-name">{{ company.name }}</span>
+            <span class="company-jobs">{{ company.job_count }} jobs</span>
+            <div class="bar-wrap">
+                <div class="bar" style="width: {{ (company.job_count / companies[0].job_count * 100)|int }}%"></div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+// ── Top Skills Chart ──────────────────────────────────────
+fetch("/api/top-skills")
+    .then(r => r.json())
+    .then(data => {
+        new Chart(document.getElementById("skillsChart"), {
+            type: "bar",
+            data: {
+                labels:   data.map(d => d.name),
+                datasets: [{
+                    label:           "Job Demand",
+                    data:            data.map(d => d.demand),
+                    backgroundColor: "#2D6A4F",
+                    borderRadius:    6,
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: "#f0f0f0" } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    });
+
+// ── Category Chart ────────────────────────────────────────
+fetch("/api/categories")
+    .then(r => r.json())
+    .then(data => {
+        new Chart(document.getElementById("categoryChart"), {
+            type: "doughnut",
+            data: {
+                labels:   data.map(d => d.category),
+                datasets: [{
+                    data:            data.map(d => d.count),
+                    backgroundColor: [
+                        "#2D6A4F", "#40916C", "#52B788",
+                        "#74C69D", "#95D5B2", "#B7E4C7"
+                    ],
+                    borderWidth: 0,
+                }]
+            },
+            options: {
+                plugins: { legend: { position: "bottom" } },
+                cutout: "65%"
+            }
+        });
+    });
+</script>
+
+{% endblock %}
