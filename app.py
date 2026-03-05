@@ -16,7 +16,13 @@ from analyser import (
 
 app = Flask(__name__)
 app.jinja_env.globals.update(enumerate=enumerate)
-init_db()
+
+# Safe startup — don't crash if DB not ready
+try:
+    init_db()
+    print("✅ Database initialized!")
+except Exception as e:
+    print(f"⚠️ Database init failed: {e}")
 
 # ── Dashboard ─────────────────────────────────────────────
 @app.route("/")
@@ -76,6 +82,20 @@ def api_salary_by_skill():
 @app.route("/api/categories")
 def api_categories():
     return jsonify(get_jobs_by_category())
+
+@app.route("/debug")
+def debug():
+    import os
+    db_url = os.environ.get("DATABASE_URL", "NOT FOUND")
+    return {
+        "url_found": db_url != "NOT FOUND",
+        "url_preview": db_url[:50] if db_url else "empty",
+        "starts_with_postgresql": db_url.startswith("postgresql") if db_url else False
+    }
+
+@app.route("/health")
+def health():
+    return {"status": "ok"}, 200
 
 if __name__ == "__main__":
     app.run(debug=True)
